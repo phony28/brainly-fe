@@ -1,7 +1,7 @@
 import { useRef } from "react"; // Importing useRef for referencing DOM elements
 import { Button } from "../components/button"; // Importing Button component for the submit button
 import { Input } from "../components/input"; // Importing Input component for form fields
-
+import { BACKEND_URL } from "../config"; // Importing the backend URL for API requests
 import axios from "axios"; // Importing axios for making HTTP requests
 import { useNavigate } from "react-router-dom"; // Importing useNavigate hook for routing
 
@@ -21,7 +21,7 @@ export function Signin() {
         const password = passwordRef.current?.value; // Get the value from the password input field
 
         // Send POST request to the backend API for signin
-        const response = await axios.post( "/api/v1/signin", {
+        const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
             username, // Send username as part of the request
             password  // Send password as part of the request
         });
