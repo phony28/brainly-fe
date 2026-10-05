@@ -5,6 +5,8 @@ import { CreateContentModal } from "../components/createContentModal" // Importi
 import { PlusIcon } from "../icons/plusIcon" // Importing Plus icon for the 'Add content' button
 import { ShareIcon } from "../icons/shareIcon" // Importing Share icon for the 'Share brain' button
 import { Sidebar } from "../components/sideBar" // Importing Sidebar component for navigation
+import { useContent } from "../hooks/custom";
+import { BACKEND_URL } from "../config";
 
 import axios from "axios" // Importing axios for making HTTP requests
 
@@ -18,7 +20,7 @@ export function Dashboard() {
   // useEffect hook to refresh the content whenever the modalOpen state changes
   useEffect(() => {
     refresh();
-  }, [modalOpen])
+  }, [modalOpen, refresh])
 
   return (
     <div>
