@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
-import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
 import { Logo } from "../icons/logo";
-import { BACKEND_URL } from "../config";
+import { api, getApiErrorMessage } from "../api";
 
 export function Signin() {
   const usernameRef = useRef<HTMLInputElement | null>(null);
@@ -19,14 +18,14 @@ export function Signin() {
     setError("");
     setLoading(true);
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
-        username: usernameRef.current?.value,
+      const response = await api.post<{ token: string }>("/signin", {
+        username: usernameRef.current?.value.trim(),
         password: passwordRef.current?.value,
       });
       localStorage.setItem("token", response.data.token);
       navigate("/dashboard");
-    } catch {
-      setError("We couldn’t sign you in. Check your details and try again.");
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "We couldn’t sign you in. Check your details and try again."));
     } finally {
       setLoading(false);
     }
@@ -46,8 +45,8 @@ export function Signin() {
           {location.state?.message && <p className="form-success" role="status">{location.state.message}</p>}
         </div>
         <form onSubmit={signin} className="auth-form">
-          <Input reference={usernameRef} placeholder="you@example.com" label="Username" autoComplete="username" />
-          <Input reference={passwordRef} placeholder="Enter your password" label="Password" type="password" autoComplete="current-password" />
+          <Input reference={usernameRef} placeholder="Your username" label="Username" autoComplete="username" required />
+          <Input reference={passwordRef} placeholder="Enter your password" label="Password" type="password" autoComplete="current-password" required />
           {error && <p className="form-error" role="alert">{error}</p>}
           <Button type="submit" loading={loading} variant="primary" text={loading ? "Signing in…" : "Sign in"} fullWidth />
         </form>

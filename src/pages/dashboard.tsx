@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
 import { Button } from "../components/button";
 import { Card } from "../components/Card";
 import { CreateContentModal } from "../components/createContentModal";
@@ -7,6 +6,7 @@ import { Sidebar, type ContentFilter } from "../components/sideBar";
 import { PlusIcon } from "../icons/plusIcon";
 import { ShareIcon } from "../icons/shareIcon";
 import { useContent } from "../hooks/custom";
+import { api } from "../api";
 import { BACKEND_URL } from "../config";
 
 export function Dashboard() {
@@ -32,12 +32,14 @@ export function Dashboard() {
 
   async function shareBrain() {
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/v1/brain/share`, { share: true }, {
-        headers: { Authorization: localStorage.getItem("token") || "" },
-      });
-      const shareUrl = `${window.location.origin}/share/${response.data.hash}`;
-      await navigator.clipboard.writeText(shareUrl);
-      window.alert(`Share link copied to clipboard:\n${shareUrl}`);
+      const response = await api.post<{ hash: string }>("/brain/share", { share: true });
+      const shareUrl = `${BACKEND_URL}/api/v1/brain/${response.data.hash}`;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        window.alert(`Share link copied to clipboard:\n${shareUrl}`);
+      } else {
+        window.prompt("Copy this share link:", shareUrl);
+      }
     } catch {
       window.alert("We couldn’t create a share link. Please try again.");
     }

@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
 import { Logo } from "../icons/logo";
-import { BACKEND_URL } from "../config";
+import { api, getApiErrorMessage } from "../api";
 
 export function Signup() {
   const usernameRef = useRef<HTMLInputElement | null>(null);
@@ -18,13 +17,13 @@ export function Signup() {
     setError("");
     setLoading(true);
     try {
-      await axios.post(`${BACKEND_URL}/api/v1/signup`, {
-        username: usernameRef.current?.value,
+      await api.post("/signup", {
+        username: usernameRef.current?.value.trim(),
         password: passwordRef.current?.value,
       });
       navigate("/signin", { state: { message: "Your account is ready. Sign in to continue." } });
-    } catch {
-      setError("We couldn’t create your account. Please check your details and try again.");
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "We couldn’t create your account. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -43,8 +42,8 @@ export function Signup() {
           <p>Create your account and keep everything worth remembering together.</p>
         </div>
         <form onSubmit={signup} className="auth-form">
-          <Input reference={usernameRef} placeholder="you@example.com" label="Username" autoComplete="username" />
-          <Input reference={passwordRef} placeholder="Create a password" label="Password" type="password" autoComplete="new-password" />
+          <Input reference={usernameRef} placeholder="Choose a username" label="Username" autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9._-]+" title="Use 3–30 letters, numbers, dots, underscores, or hyphens." />
+          <Input reference={passwordRef} placeholder="At least 8 characters" label="Password" type="password" autoComplete="new-password" required minLength={8} maxLength={72} />
           {error && <p className="form-error" role="alert">{error}</p>}
           <Button type="submit" loading={loading} variant="primary" text={loading ? "Creating account…" : "Create account"} fullWidth />
         </form>
