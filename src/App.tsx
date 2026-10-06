@@ -1,27 +1,20 @@
-import { Button } from "./components/button";
-import { Card } from "./components/Card";
-import { Sidebar } from "./components/sideBar";
-import { PlusIcon } from "./icons/plusIcon";
-import { ShareIcon } from "./icons/shareIcon";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Dashboard } from "./pages/dashboard";
+import { Signin } from "./pages/Signin";
+import { Signup } from "./pages/Signup";
 
 function App() {
   return (
-    <div className="min-h-screen">
-      <Sidebar />
-      <main className="ml-72 p-4">
-        <Button variant="primary" text="Share Brain" startIcon={<ShareIcon />} />
-        <Button variant="secondary" text="Add Content" startIcon={<PlusIcon />} />
-
-        <Card
-          title="Sample YouTube Video"
-          link="https://www.youtube.com/watch?v=vzVbqXVID-Y"
-          type="youtube"
-        />
-      </main>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/signin" replace />} />
+        <Route path="/signin" element={<Signin />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/signin" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-  
-  
 
 export default App;

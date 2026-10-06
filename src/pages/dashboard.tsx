@@ -1,66 +1,93 @@
-import { useEffect, useState } from "react" // Importing React hooks to manage state and side effects
-import { Button } from "../components/button" // Importing the Button component
-import { Card } from "../components/Card" // Importing the Card component
-import { CreateContentModal } from "../components/createContentModal" // Importing the modal to create content
-import { PlusIcon } from "../icons/plusIcon" // Importing Plus icon for the 'Add content' button
-import { ShareIcon } from "../icons/shareIcon" // Importing Share icon for the 'Share brain' button
-import { Sidebar } from "../components/sideBar" // Importing Sidebar component for navigation
+import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
+import { Button } from "../components/button";
+import { Card } from "../components/Card";
+import { CreateContentModal } from "../components/createContentModal";
+import { Sidebar, type ContentFilter } from "../components/sideBar";
+import { PlusIcon } from "../icons/plusIcon";
+import { ShareIcon } from "../icons/shareIcon";
 import { useContent } from "../hooks/custom";
 import { BACKEND_URL } from "../config";
 
-import axios from "axios" // Importing axios for making HTTP requests
-
-// Dashboard component that renders the main page
 export function Dashboard() {
-  // State to manage the modal visibility
   const [modalOpen, setModalOpen] = useState(false);
-  // Custom hook to fetch content and refresh the content list
-  const {contents, refresh} = useContent();
+  const [filter, setFilter] = useState<ContentFilter>("all");
+  const [loadError, setLoadError] = useState(false);
+  const { contents, refresh } = useContent();
 
-  // useEffect hook to refresh the content whenever the modalOpen state changes
+  const loadContent = useCallback(async () => {
+    try {
+      await refresh();
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
+    }
+  }, [refresh]);
+
   useEffect(() => {
-    refresh();
-  }, [modalOpen, refresh])
+    void loadContent();
+  }, [loadContent, modalOpen]);
+
+  const visibleContents = filter === "all" ? contents : contents.filter((content) => content.type === filter);
+
+  async function shareBrain() {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/v1/brain/share`, { share: true }, {
+        headers: { Authorization: localStorage.getItem("token") || "" },
+      });
+      const shareUrl = `${window.location.origin}/share/${response.data.hash}`;
+      await navigator.clipboard.writeText(shareUrl);
+      window.alert(`Share link copied to clipboard:\n${shareUrl}`);
+    } catch {
+      window.alert("We couldn’t create a share link. Please try again.");
+    }
+  }
 
   return (
-    <div>
-      <Sidebar /> {/* Sidebar component for navigation */}
-      
-      <div className="p-4 ml-72 min-h-screen bg-gray-100 border-2">
-        {/* CreateContentModal component for adding new content, controlled by modalOpen state */}
+    <div className="dashboard-shell">
+      <Sidebar filter={filter} onFilterChange={setFilter} />
+      <main className="dashboard-main">
         <CreateContentModal open={modalOpen} onClose={() => setModalOpen(false)} />
-        
-        <div className="flex justify-end gap-4">
-          {/* Button to open the 'Create Content' modal */}
-          <Button onClick={() => setModalOpen(true)} variant="primary" text="Add content" startIcon={<PlusIcon />} />
-          
-          {/* Button to share the brain content */}
-          <Button onClick={async () => {
-              // Making a POST request to share the brain content
-              const response = await axios.post(`${BACKEND_URL}/api/v1/brain/share`, {
-                  share: true
-              }, {
-                  headers: {
-                      "Authorization": localStorage.getItem("token") // Passing the authorization token in the request header
-                  }
-              });
-              // Constructing the share URL and alerting the user with the link
-              const shareUrl = `http://localhost:5173/share/${response.data.hash}`;
-              alert(shareUrl);
-          }} variant="secondary" text="Share brain" startIcon={<ShareIcon />} />
+        <header className="dashboard-header">
+          <div>
+            <p className="eyebrow">YOUR PERSONAL LIBRARY</p>
+            <h1>Your brain</h1>
+            <p className="dashboard-subtitle">A home for the things you want to remember.</p>
+          </div>
+          <div className="dashboard-actions">
+            <Button onClick={shareBrain} variant="secondary" text="Share brain" startIcon={<ShareIcon />} />
+            <Button onClick={() => setModalOpen(true)} variant="primary" text="Add content" startIcon={<PlusIcon />} />
+          </div>
+        </header>
+        <div className="library-toolbar">
+          <div>
+            <h2>Your collection</h2>
+            <span>{visibleContents.length} {visibleContents.length === 1 ? "item" : "items"}</span>
+          </div>
+          <span className="collection-label"><span className="collection-dot" /> ALL CONTENT</span>
         </div>
-
-        <div className="flex gap-4 flex-wrap">
-          {/* Rendering the content cards dynamically from the 'contents' array */}
-          {contents.map(({type, link, title}) => (
-            <Card 
-                type={type} 
-                link={link} 
-                title={title} 
-            />
-          ))}
-        </div>
-      </div>
+        {loadError ? (
+          <div className="empty-state">
+            <div className="empty-icon">↻</div>
+            <h3>We couldn’t load your collection</h3>
+            <p>Check your connection and try again.</p>
+            <button className="text-action" onClick={() => void loadContent()}>Try again</button>
+          </div>
+        ) : visibleContents.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon"><PlusIcon /></div>
+            <h3>{contents.length === 0 ? "Your library starts here" : `No ${filter === "youtube" ? "YouTube" : "Twitter"} items yet`}</h3>
+            <p>{contents.length === 0 ? "Save a video or a post you want to revisit later." : "Try another filter or add something new to your library."}</p>
+            <Button onClick={() => setModalOpen(true)} variant="primary" text="Add content" startIcon={<PlusIcon />} />
+          </div>
+        ) : (
+          <section className="content-grid" aria-label="Saved content">
+            {visibleContents.map(({ type, link, title }, index) => (
+              <Card key={`${link}-${index}`} type={type} link={link} title={title} />
+            ))}
+          </section>
+        )}
+      </main>
     </div>
   );
 }

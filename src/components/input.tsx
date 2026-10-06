@@ -1,20 +1,17 @@
-// Defining the InputProps interface to specify the types for the props
-interface InputProps { 
-    placeholder: string; // Placeholder text for the input field
-    reference?: any // Optional reference to the input field for accessing its value or methods
+import type { InputHTMLAttributes, Ref } from "react";
+
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "placeholder"> {
+  placeholder: string;
+  reference?: Ref<HTMLInputElement>;
+  label?: string;
 }
 
-// Input component definition
-export function Input({placeholder, reference}: InputProps) {
-    return (
-        <div>
-            {/* Input field with the provided placeholder and reference */}
-            <input 
-                ref={reference} // Attaching the reference to the input field
-                placeholder={placeholder} // Setting the placeholder text for the input field
-                type={"text"} // Defining the input type as text
-                className="px-4 py-2 border rounded m-2" // Tailwind CSS classes for styling the input field
-            />
-        </div>
-    );
+export function Input({ placeholder, reference, label, id, ...props }: InputProps) {
+  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
+  return (
+    <div className="input-field">
+      {label && <label htmlFor={inputId}>{label}</label>}
+      <input ref={reference} id={inputId} placeholder={placeholder} className="text-input" {...props} />
+    </div>
+  );
 }

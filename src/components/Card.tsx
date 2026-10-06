@@ -1,67 +1,45 @@
-import { ShareIcon } from "../icons/shareIcon.tsx";
+import { ShareIcon } from "../icons/shareIcon";
 
 interface CardProps {
-    title: string; // Title of the card, e.g., video or tweet title
-    link: string; // Link to the content (YouTube or Twitter)
-    type: "twitter" | "youtube"; // Type of the content
+  title: string;
+  link: string;
+  type: "twitter" | "youtube";
 }
 
-// The Card component represents a styled card that can display either a YouTube video or a Twitter embed based on the type prop.
 export function Card({ title, link, type }: CardProps) {
-    return (
-        <div>
-            {/* Card Container */}
-            <div className="p-4 bg-white rounded-md border-gray-200 max-w-72 border min-h-48 min-w-72">
-                {/* Header Section */}
-                <div className="flex justify-between">
-                    {/* Left Section: Title with Icon */}
-                    <div className="flex items-center text-md">
-                        <div className="text-gray-500 pr-2">
-                            {/* Share Icon preceding the title */}
-                            <ShareIcon />
-                        </div>
-                        {title}
-                    </div>
-                    {/* Right Section: Links with Icons */}
-                    <div className="flex items-center">
-                        <div className="pr-2 text-gray-500">
-                            {/* Clickable Share Icon that opens the link */}
-                            <a href={link} target="_blank">
-                                <ShareIcon />
-                            </a>
-                        </div>
-                        <div className="text-gray-500">
-                            {/* Placeholder for another Share Icon */}
-                            <ShareIcon />
-                        </div>
-                    </div>
-                </div>
+  const embedUrl = type === "youtube"
+    ? link.replace("watch?v=", "embed/").replace("youtu.be/", "www.youtube.com/embed/")
+    : link.replace("x.com", "twitter.com");
 
-                {/* Content Section */}
-                <div className="pt-4">
-                    {/* Render YouTube embed if type is "youtube" */}
-                    {type === "youtube" && (
-                        <iframe
-                            className="w-full"
-                            src={link
-                                .replace("watch", "embed")
-                                .replace("?v=", "/")}
-                            title="YouTube video player"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            referrerPolicy="strict-origin-when-cross-origin"
-                            allowFullScreen
-                        ></iframe>
-                    )}
-
-                    {/* Render Twitter embed if type is "twitter" */}
-                    {type === "twitter" && (
-                        <blockquote className="twitter-tweet">
-                            <a href={link.replace("x.com", "twitter.com")}></a>
-                        </blockquote>
-                    )}
-                </div>
-            </div>
+  return (
+    <article className="content-card">
+      <header className="content-card-header">
+        <span className={`content-type-icon ${type}`}>{type === "youtube" ? "▶" : "𝕏"}</span>
+        <div className="content-card-heading">
+          <span className="content-type-label">{type === "youtube" ? "YOUTUBE" : "TWITTER"}</span>
+          <h3 title={title}>{title}</h3>
         </div>
-    );
+        <a className="card-open-link" href={link} target="_blank" rel="noreferrer" aria-label={`Open ${title}`}>
+          <ShareIcon />
+        </a>
+      </header>
+      <div className="content-card-body">
+        {type === "youtube" ? (
+          <iframe
+            src={embedUrl}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        ) : (
+          <div className="twitter-preview">
+            <span className="twitter-mark">𝕏</span>
+            <p>View this post on X to see the full conversation.</p>
+            <a href={embedUrl} target="_blank" rel="noreferrer">Open post <span aria-hidden="true">↗</span></a>
+          </div>
+        )}
+      </div>
+    </article>
+  );
 }

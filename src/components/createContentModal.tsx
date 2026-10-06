@@ -1,94 +1,55 @@
-import { useRef, useState } from "react"; // Importing React hooks for state management and refs
-import { Button } from "./button"; // Importing the Button component
-import { Input } from "./input"; // Importing the Input component for form inputs
-
-import axios from "axios"; // Importing axios for HTTP requests
+import { useRef, useState } from "react";
+import axios from "axios";
+import { Button } from "./button";
+import { Input } from "./input";
 
 type ContentType = "youtube" | "twitter";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:3000";
 
-// Interface for the props passed to the CreateContentModal component
 interface CreateContentModalProps {
-    open: boolean; // State to determine if the modal is open
-    onClose: () => void; // Function to close the modal
+  open: boolean;
+  onClose: () => void;
 }
 
-// CreateContentModal component definition
 export function CreateContentModal({ open, onClose }: CreateContentModalProps) {
-    // References to the input fields for title and link
-    const titleRef = useRef<HTMLInputElement>(null);
-    const linkRef = useRef<HTMLInputElement>(null);
-    // State to manage the selected content type
-    const [type, setType] = useState<ContentType>("youtube");
+  const titleRef = useRef<HTMLInputElement>(null);
+  const linkRef = useRef<HTMLInputElement>(null);
+  const [type, setType] = useState<ContentType>("youtube");
 
-    // Function to handle adding new content
-    async function addContent() {
-        const title = titleRef.current?.value; // Getting the title value from the input
-        const link = linkRef.current?.value; // Getting the link value from the input
+  async function addContent() {
+    const title = titleRef.current?.value.trim();
+    const link = linkRef.current?.value.trim();
+    if (!title || !link) return;
+    await axios.post(`${BACKEND_URL}/api/v1/content`, { link, title, type }, {
+      headers: { Authorization: localStorage.getItem("token") || "" },
+    });
+    if (titleRef.current) titleRef.current.value = "";
+    if (linkRef.current) linkRef.current.value = "";
+    onClose();
+  }
 
-        // Making a POST request to add new content
-        await axios.post(`${BACKEND_URL}/api/v1/content`, {
-            link,
-            title,
-            type
-        }, {
-            headers: {
-                "Authorization": localStorage.getItem("token") || "" // Including the authorization token
-            }
-        });
+  if (!open) return null;
 
-        // Closing the modal after adding content
-        onClose();
-    }
-
-    return (
-        <div>
-            {open && (
-                // Modal background overlay
-                <div>
-                    <div className="w-screen h-screen bg-slate-500 fixed top-0 left-0 opacity-60 flex justify-center"></div>
-                    {/* Modal content container */}
-                    <div className="w-screen h-screen fixed top-0 left-0 flex justify-center">
-                        <div className="flex flex-col justify-center">
-                            <span className="bg-white opacity-100 p-4 rounded fixed">
-                                {/* Close button */}
-                                <div className="flex justify-end">
-                                    <button type="button" onClick={onClose} aria-label="Close modal" className="cursor-pointer">
-                                        ×
-                                    </button>
-                                </div>
-                                {/* Input fields for title and link */}
-                                <div>
-                                    <Input reference={titleRef} placeholder="Title" />
-                                    <Input reference={linkRef} placeholder="Link" />
-                                </div>
-                                {/* Content type selection */}
-                                <div>
-                                    <h1>Type</h1>
-                                    <div className="flex gap-1 justify-center pb-2">
-                                        {/* Button to select YouTube type */}
-                                        <Button
-                                            text="Youtube"
-                                            variant={type === "youtube" ? "primary" : "secondary"}
-                                            onClick={() => setType("youtube")}
-                                        />
-                                        {/* Button to select Twitter type */}
-                                        <Button
-                                            text="Twitter"
-                                            variant={type === "twitter" ? "primary" : "secondary"}
-                                            onClick={() => setType("twitter")}
-                                        />
-                                    </div>
-                                </div>
-                                {/* Submit button */}
-                                <div className="flex justify-center">
-                                    <Button onClick={addContent} variant="primary" text="Submit" />
-                                </div>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            )}
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="content-modal" role="dialog" aria-modal="true" aria-labelledby="add-content-title">
+        <header className="modal-header">
+          <div><p className="eyebrow">GROW YOUR LIBRARY</p><h2 id="add-content-title">Add something good</h2></div>
+          <button type="button" onClick={onClose} aria-label="Close modal" className="modal-close">×</button>
+        </header>
+        <div className="modal-fields">
+          <Input reference={titleRef} placeholder="e.g. A talk worth saving" label="Title" />
+          <Input reference={linkRef} placeholder="Paste a YouTube or Twitter link" label="Link" type="url" />
         </div>
-    );
+        <div className="modal-type">
+          <span>Content type</span>
+          <div className="modal-type-options">
+            <Button text="YouTube" variant={type === "youtube" ? "primary" : "secondary"} onClick={() => setType("youtube")} />
+            <Button text="Twitter" variant={type === "twitter" ? "primary" : "secondary"} onClick={() => setType("twitter")} />
+          </div>
+        </div>
+        <Button onClick={addContent} variant="primary" text="Save to library" fullWidth />
+      </section>
+    </div>
+  );
 }

@@ -1,53 +1,66 @@
-import { useRef } from "react"; // Importing useRef to create references for the input fields
-import { Button } from "../components/button"; // Importing Button component for the submit button
-import { Input } from "../components/input"; // Importing Input component for form fields
-import axios from "axios"; // Importing axios for making HTTP requests
-import { BACKEND_URL } from "../config"; // Importing the backend URL for API requests
-import { useNavigate } from "react-router-dom"; // Importing useNavigate hook for routing
+import { useRef, useState } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../components/button";
+import { Input } from "../components/input";
+import { Logo } from "../icons/logo";
+import { BACKEND_URL } from "../config";
 
-// Signup component to handle user registration
 export function Signup() {
-    // References for the username and password input fields
-    const usernameRef = useRef<HTMLInputElement | null>(null);
-    const passwordRef = useRef<HTMLInputElement | null>(null);
+  const usernameRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    // useNavigate hook for navigating to different routes
-    const navigate = useNavigate();
-
-    // signup function to handle user registration
-    async function signup() {
-        const username = usernameRef.current?.value; // Get the value from the username input field
-        console.log(usernameRef.current); // Log the username reference for debugging (optional)
-        const password = passwordRef.current?.value; // Get the value from the password input field
-
-        // Send POST request to the backend API for signup
-        await axios.post(BACKEND_URL + "/api/v1/signup", {
-            username, // Send username as part of the request
-            password  // Send password as part of the request
-        });
-
-        // Navigate to the signin page after successful signup
-        navigate("/signin");
-
-        // Display an alert message to inform the user that the signup was successful
-        alert("You have signed up!");
+  async function signup(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+        username: usernameRef.current?.value,
+        password: passwordRef.current?.value,
+      });
+      navigate("/signin", { state: { message: "Your account is ready. Sign in to continue." } });
+    } catch {
+      setError("We couldn’t create your account. Please check your details and try again.");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    // JSX to render the signup form
-    return (
-        <div className="h-screen w-screen bg-gray-200 flex justify-center items-center">
-            <div className="bg-white rounded-xl border min-w-48 p-8">
-                {/* Input for username */}
-                <Input reference={usernameRef} placeholder="Username" />
-                
-                {/* Input for password */}
-                <Input reference={passwordRef} placeholder="Password" />
-
-                {/* Submit button */}
-                <div className="flex justify-center pt-4">
-                    <Button onClick={signup} loading={false} variant="primary" text="Signup" fullWidth={true} />
-                </div>
-            </div>
+  return (
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="signup-title">
+        <Link to="/signin" className="brand-lockup" aria-label="Brainly home">
+          <span className="brand-mark"><Logo /></span>
+          <span>brainly</span>
+        </Link>
+        <div className="auth-heading">
+          <p className="eyebrow">START YOUR COLLECTION</p>
+          <h1 id="signup-title">Make space for ideas</h1>
+          <p>Create your account and keep everything worth remembering together.</p>
         </div>
-    );
+        <form onSubmit={signup} className="auth-form">
+          <Input reference={usernameRef} placeholder="you@example.com" label="Username" autoComplete="username" />
+          <Input reference={passwordRef} placeholder="Create a password" label="Password" type="password" autoComplete="new-password" />
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <Button type="submit" loading={loading} variant="primary" text={loading ? "Creating account…" : "Create account"} fullWidth />
+        </form>
+        <p className="auth-switch">Already have an account? <Link to="/signin">Sign in</Link></p>
+      </section>
+      <aside className="auth-aside">
+        <div className="aside-orbit orbit-one" />
+        <div className="aside-orbit orbit-two" />
+        <div className="aside-content">
+          <span className="aside-kicker">Collect. Connect. Come back.</span>
+          <h2>Your next<br />great thought<br />starts here.</h2>
+          <p>Build a thoughtful library from the things that inspire you every day.</p>
+          <div className="aside-note"><span className="note-dot" /> Simple, personal, and always yours</div>
+        </div>
+        <span className="aside-footer">MAKE ROOM FOR WHAT MATTERS</span>
+      </aside>
+    </main>
+  );
 }
