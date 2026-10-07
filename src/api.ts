@@ -13,6 +13,19 @@ api.interceptors.request.use((request) => {
   return request;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      localStorage.removeItem("token");
+      if (window.location.pathname !== "/signin") {
+        window.location.assign("/signin");
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 export function getApiErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError<{ message?: string }>(error)) {
     if (error.response?.data?.message) return error.response.data.message;

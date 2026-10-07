@@ -17,11 +17,14 @@ export function Signup() {
     setError("");
     setLoading(true);
     try {
-      await api.post("/signup", {
+      const credentials = {
         username: usernameRef.current?.value.trim(),
         password: passwordRef.current?.value,
-      });
-      navigate("/signin", { state: { message: "Your account is ready. Sign in to continue." } });
+      };
+      await api.post("/signup", credentials);
+      const response = await api.post<{ token: string }>("/signin", credentials);
+      localStorage.setItem("token", response.data.token);
+      navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setError(getApiErrorMessage(requestError, "We couldn’t create your account. Please try again."));
     } finally {
